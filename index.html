@@ -1,15 +1,41 @@
 <!doctype html>
 <html class="no-js" lang="">
     <head>
-        <meta charset="utf-8">
-        <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <title></title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta charset="utf-8">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      <title></title>
+      <meta name="description" content="">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+
+      <script src="https://d3js.org/d3.v4.min.js"></script>
 
     </head>
     <body>
+    
+      <script type="text/javascript">
 
+        var sthlm = [59.311162, 18.074806];
+
+        var startDate = "2016-06-01",
+            endDate = "2016-06-10";
+
+        getNewData(sthlm[0], sthlm[1], startDate, endDate);
+
+        function getNewData(lat, lng, start, end){
+
+          var url =
+            "/darkskySeason?lat=" + lat
+            + "&lng=" + lng
+            + "&startDate=" + start
+            + "&endDate=" + end;
+
+          d3.json(url, function(err, json){
+            console.log(json);
+          });
+
+        }
+	    	
+	    </script>
     
     </body>
 </html>
