@@ -20,6 +20,7 @@ function getDataForRange(req, res){
 //  1. create date array from dates in the request
   var seasonDates = getDateRange(req);
   var seasonData = {
+    "key": "from " + req.query.startDate + " to " + req.query.endDate,
     "data": []
   };
   var finished = _.after(seasonDates.length, done);
@@ -33,16 +34,22 @@ function getDataForRange(req, res){
         lng = req.query.lng;
 
     getAtTime(lat, lng, unixTime, parseData);
-
   }
 
   function parseData(data){
-    seasonData.data.push(data.daily.data[0]);
+    data = data.daily.data[0];
+    data.key = seasonData.key;
+    seasonData.data.push(data);
     finished();
   }
 
   function done(){
     console.log("done, trying to send...");
+    console.log(typeof(seasonData));
+    // seasonData = JSON.parse(seasonData);
+    seasonData.data.sort(function(a, b){
+      return parseInt(a.time) - parseInt(b.time);
+    });
     res.json(seasonData);
     console.timeEnd("test");
   }

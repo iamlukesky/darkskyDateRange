@@ -11,6 +11,8 @@
       <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.1.15/leaflet-providers.min.js"></script>
       <script src="https://d3js.org/d3.v4.min.js"></script>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.5.1/css/pikaday.min.css" />
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.5.1/pikaday.min.js"></script>
 
       <style>
 
@@ -24,9 +26,19 @@
           height: 98%;
         }
 
-        #map{
+        #map, #content{
           height: 50%;
+          margin: 10px;
         }
+
+        #response{
+          height: 80%;
+        }
+
+/*        #content{
+          margin: 10px;
+          h
+        }*/
 
 
 
@@ -44,9 +56,24 @@
 
 
       <div id="map"></div>
+      <div id="content">
+
+        <p align="right">Från: <input type="text" id="datepickerFrom">
+        Till: <input type="text" id="datepickerTo"></p>
+
+        <div id="response"></div>
+
+      </div>
+      
 
     
       <script type="text/javascript">
+
+        var pickerFrom = new Pikaday({ field: document.getElementById('datepickerFrom') });
+        var pickerTo = new Pikaday({ field: document.getElementById('datepickerTo') });
+
+        pickerFrom.setDate('2016-05-01');
+        pickerTo.setDate('2016-06-01');
 
         var sthlm = [59.311162, 18.074806];
         var map = L.map('map');
@@ -54,28 +81,60 @@
         map.setView(sthlm, 13);
 
         var circle = L.circleMarker(sthlm, {
-          color: "red",
-          fillColor: "red",
-          fillOpacity: 0.5,
-          radius: 5
-        }).addTo(map);
+            color: "red",
+            fillColor: "red",
+            fillOpacity: 0,
+            opacity: 0,
+            radius: 5
+          }).addTo(map);;
 
         map.on('click', onMapClick);
 
+        // set the dimensions and margins of the graph
+        var chartParent = d3.select("#response");
+        // console.log(parseInt(chartParent.style("width")));
+        var width = parseInt(chartParent.style("width")),
+            height = parseInt(chartParent.style("height"));
+        var margin = {top: 20, right: 20, bottom: 30, left: 40},
+            width = width - margin.left - margin.right,
+            height = height - margin.top - margin.bottom;
+
+        // set the ranges
+        var parseDate = d3.isoParse;
+
+        var xScale = d3.scaleBand()
+                  .rangeRound([0, width])
+                  .padding(0);
+        var yScale = d3.scaleLinear()
+                  .range([height, 0]);
+
+        var xAxis = d3.axisBottom()
+            .scale(xScale)
+            .tickFormat(d3.timeFormat("%Y-%m-%d"));
+        var yAxis = d3.axisLeft()
+            .scale(yScale)
+            .ticks(10);
+                  
+        // append the svg object to the body of the page
+        // append a 'group' element to 'svg'
+        // moves the 'group' element to the top left margin
+        var svg = d3.select("#response").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+            .attr("transform", 
+                  "translate(" + margin.left + "," + margin.top + ")");
+
         function onMapClick(e){
           // getNewData(e.latlng);
+          var startDate = pickerFrom.getDate().toString(),
+              endDate = pickerTo.getDate().toString();
 
-          circle.setLatLng(e.latlng);
-          circle.setStyle({
-            color: "red",
-            fillColor: "red"
-          });
-        }
+          var lat = e.latlng.lat,
+              lng = e.latlng.lng;
 
-        var startDate = "2016-06-01",
-            endDate = "2016-06-10";
-
-        getNewData(sthlm[0], sthlm[1], startDate, endDate);
+          getNewData(lat, lng, startDate, endDate);
+        }       
 
         function getNewData(lat, lng, start, end){
 
@@ -86,12 +145,92 @@
             + "&endDate=" + end;
 
           d3.json(url, function(err, json){
-            console.log(json);
+            circle.setStyle({
+              color: "green",
+              fillColor: "green"
+            });
+            drawChart(json.data); 
+
+            circle.setLatLng([lat, lng]);
+            circle.setStyle({
+              color: "green",
+              fillColor: "green",
+              fillOpacity: 0.5,
+              opacity: 0.5,
+              radius: 5
+            })
+            // d3.select("#response")
+            //   .append("p")
+            //   .text(tempDays);
+
           });
 
         }
+
+        function drawChart(data){
+
+          console.log("drawing");
+
+          data.forEach(function(d) {
+            d.date = parseDate(d.time);
+            d.value = +d.temperatureMin;
+          });
+
+          xScale.domain(data.map(function(d) { return d.date; }));
+          yScale.domain([0, d3.max(data, function(d) { return d.value; })]);
+
+          svg.append("g")
+              .attr("class", "x axis")
+              .attr("transform", "translate(0," + height + ")")
+              .call(xAxis)
+            .selectAll("text")
+              .style("text-anchor", "end")
+              .attr("dx", "-.8em")
+              .attr("dy", "-.55em")
+              .attr("transform", "rotate(-90)" );
+          svg.append("g")
+              .attr("class", "y axis")
+              .call(yAxis)
+            .append("text")
+              .attr("transform", "rotate(-90)")
+              .attr("y", 6)
+              .attr("dy", ".71em")
+              .style("text-anchor", "end")
+              .text("Value");
+          svg.selectAll("bar")
+              .data(data)
+            .enter().append("rect")
+              .style("fill", function(d){
+                if(d.value < 10){
+                  return "gray";
+                }else{
+                  return "green";
+                }
+              })
+              .attr("x", function(d) { return xScale(d.date); })
+              .attr("width", xScale.bandwidth())
+              .attr("y", function(d) { return yScale(d.value); })
+              .attr("height", function(d) { return height - yScale(d.value); });
+        }
+
+
+
+            // var threshold = 10;
+            // var tempDays = d3.sum(json.data, function(d){
+            //   if(((d.temperatureMax + d.temperatureMin)/2) > threshold){
+            //     return 1;
+            //   }else{
+            //     return 0;
+            //   }
+            // });
+            // console.log(tempDays);
 	    	
 	    </script>
     
     </body>
 </html>
+
+
+
+
+
