@@ -40,7 +40,6 @@
     </head>
     <body>
 
-
       <div id="map"></div>
       <div id="content">
 
@@ -51,9 +50,20 @@
 
       </div>
       
-
-    
       <script type="text/javascript">
+
+        //get date ranges
+        //from (today - 3 months) to today
+        var today = new Date();
+        // var threeMonthsBack = new Date(new Date().setMonth(new Date().getMonth() - 3));
+        var threeMonthsBack = new Date();
+        threeMonthsBack.setMonth(threeMonthsBack.getMonth() - 3);
+        //from (today - 1 year) to ((today + 3 months) - 1 year)
+        var aYearAgo = new Date();
+        aYearAgo.setYear(aYearAgo.getFullYear() - 1);
+        var aYearAgoThreeMonthsForward = new Date(aYearAgo);
+        aYearAgoThreeMonthsForward.setMonth(aYearAgoThreeMonthsForward.getMonth() + 3);
+
 
         var pickerFrom = new Pikaday({ field: document.getElementById('datepickerFrom') });
         var pickerTo = new Pikaday({ field: document.getElementById('datepickerTo') });
@@ -78,7 +88,6 @@
 
         // set the dimensions and margins of the graph
         var chartParent = d3.select("#response");
-        // console.log(parseInt(chartParent.style("width")));
         var width = parseInt(chartParent.style("width")),
             height = parseInt(chartParent.style("height"));
         var margin = {top: 20, right: 20, bottom: 30, left: 40},
@@ -144,10 +153,7 @@
               fillOpacity: 0.5,
               opacity: 0.5,
               radius: 5
-            })
-            // d3.select("#response")
-            //   .append("p")
-            //   .text(tempDays);
+            });
 
           });
 
@@ -198,18 +204,6 @@
               .attr("y", function(d) { return yScale(d.value); })
               .attr("height", function(d) { return height - yScale(d.value); });
         }
-
-
-
-            // var threshold = 10;
-            // var tempDays = d3.sum(json.data, function(d){
-            //   if(((d.temperatureMax + d.temperatureMin)/2) > threshold){
-            //     return 1;
-            //   }else{
-            //     return 0;
-            //   }
-            // });
-            // console.log(tempDays);
 	    	
 	    </script>
     
