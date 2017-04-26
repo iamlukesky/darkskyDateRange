@@ -11,8 +11,6 @@
       <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.1.15/leaflet-providers.min.js"></script>
       <script src="https://d3js.org/d3.v4.min.js"></script>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.5.1/css/pikaday.min.css" />
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.5.1/pikaday.min.js"></script>
 
       <style>
 
@@ -43,9 +41,6 @@
       <div id="map"></div>
       <div id="content">
 
-        <p align="right">Från: <input type="text" id="datepickerFrom">
-        Till: <input type="text" id="datepickerTo"></p>
-
         <div id="response"></div>
 
       </div>
@@ -55,7 +50,6 @@
         //get date ranges
         //from (today - 3 months) to today
         var today = new Date();
-        // var threeMonthsBack = new Date(new Date().setMonth(new Date().getMonth() - 3));
         var threeMonthsBack = new Date();
         threeMonthsBack.setMonth(threeMonthsBack.getMonth() - 3);
         //from (today - 1 year) to ((today + 3 months) - 1 year)
@@ -63,13 +57,6 @@
         aYearAgo.setYear(aYearAgo.getFullYear() - 1);
         var aYearAgoThreeMonthsForward = new Date(aYearAgo);
         aYearAgoThreeMonthsForward.setMonth(aYearAgoThreeMonthsForward.getMonth() + 3);
-
-
-        var pickerFrom = new Pikaday({ field: document.getElementById('datepickerFrom') });
-        var pickerTo = new Pikaday({ field: document.getElementById('datepickerTo') });
-
-        pickerFrom.setDate('2016-05-01');
-        pickerTo.setDate('2016-06-01');
 
         var sthlm = [59.311162, 18.074806];
         var map = L.map('map');
@@ -122,8 +109,6 @@
 
         function onMapClick(e){
           // getNewData(e.latlng);
-          var startDate = pickerFrom.getDate().toString(),
-              endDate = pickerTo.getDate().toString();
 
           var lat = e.latlng.lat,
               lng = e.latlng.lng;
