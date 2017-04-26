@@ -1,17 +1,15 @@
 var express = require('express');  
 var request = require('request');
 var _ = require('lodash');
-// var DarkSky = require('forecast.io');
-// var util = require('util');
 
 var app = express();
+app.listen(process.env.PORT || 3000);
 
 app.get('/', function(req, res){
   res.sendFile('/index.html', {root: __dirname});
 });
 
 app.use('/darkskySeason', function(req, res){
-  // res.json(getDataForRange(req, res));
   getDataForRange(req, res);
 });
 
@@ -46,7 +44,6 @@ function getDataForRange(req, res){
   function done(){
     console.log("done, trying to send...");
     console.log(typeof(seasonData));
-    // seasonData = JSON.parse(seasonData);
     seasonData.data.sort(function(a, b){
       return parseInt(a.time) - parseInt(b.time);
     });
@@ -87,5 +84,3 @@ function getDateRange(req){
   console.log(season.length);
   return season;
 }
-
-app.listen(process.env.PORT || 3000);
