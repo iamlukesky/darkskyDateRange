@@ -1,5 +1,7 @@
 var express = require('express');  
 var request = require('request');
+var SS = require('simple-statistics');
+
 var _ = require('lodash');
 
 var app = express();
@@ -37,19 +39,27 @@ function getDataForRange(req, res){
   function parseData(data){
     data = data.daily.data[0];
     data.key = seasonData.key;
+    data.temperatureMean = getMean("temperature", data.hourly.data);
     seasonData.data.push(data);
     finished();
   }
 
   function done(){
-    console.log("done, trying to send...");
-    console.log(typeof(seasonData));
     seasonData.data.sort(function(a, b){
       return parseInt(a.time) - parseInt(b.time);
     });
+
     res.json(seasonData);
     console.timeEnd("test");
   }
+}
+
+function getMean(datapoint, data){ // data is an array of objects
+  var values = [];
+  for(var i = 0; i < data.length; i++){
+    values.push(parseFloat(data[i][datapoint]));
+  }
+  return SS.mean(values);
 }
 
 function getAtTime(lat, lng, time, callback){
