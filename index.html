@@ -47,19 +47,32 @@
       
       <script type="text/javascript">
 
+        // marker styles
+        var circleWaiting = {
+            color: "red",
+            fillColor: "red",
+            fillOpacity: 0.5,
+            opacity: 0.5,
+            radius: 7
+        };
+
+        var circleNormal = {
+          color: "green",
+          fillColor: "green",
+          fillOpacity: 0.5,
+          opacity: 0.5,
+          radius: 5
+        }
+
         // set up map
         var sthlm = [59.311162, 18.074806];
         var map = L.map('map');
         L.tileLayer.provider('OpenStreetMap.BlackAndWhite').addTo(map);
         map.setView(sthlm, 13);
 
-        var circle = L.circleMarker(sthlm, {
-            color: "red",
-            fillColor: "red",
-            fillOpacity: 0,
-            opacity: 0,
-            radius: 5
-          }).addTo(map);;
+        var circle = L.circleMarker(sthlm, circleWaiting).addTo(map);
+
+        var circle;
 
         map.on('click', onMapClick);
 
@@ -74,49 +87,10 @@
         dates.lastYear.end = new Date(dates.lastYear.start);
         dates.lastYear.end.setMonth(dates.lastYear.end.getMonth() + months); // (today - 1 yeary) + 3 months
 
-
-        // set the dimensions and margins of the graph
-        var chartParent = d3.select("#response");
-        var width = parseInt(chartParent.style("width")),
-            height = parseInt(chartParent.style("height"));
-        var margin = {top: 20, right: 20, bottom: 30, left: 40},
-            width = width - margin.left - margin.right,
-            height = height - margin.top - margin.bottom;
-
-        // set the ranges
-        var parseDate = d3.isoParse;
-
-        var xScale = d3.scaleBand()
-                  .rangeRound([0, width])
-                  .padding(0);
-        var yScale = d3.scaleLinear()
-                  .range([height, 0]);
-
-        var xAxis = d3.axisBottom()
-            .scale(xScale)
-            .tickFormat(d3.timeFormat("%Y-%m-%d"));
-        var yAxis = d3.axisLeft()
-            .scale(yScale)
-            .ticks(10);
-                  
-        // append the svg object to the body of the page
-        // append a 'group' element to 'svg'
-        // moves the 'group' element to the top left margin
-        var svg = d3.select("#response").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-          .append("g")
-            .attr("transform", 
-                  "translate(" + margin.left + "," + margin.top + ")");
-
         function onMapClick(e){
-          // getNewData(e.latlng);
-
-          var lat = e.latlng.lat,
-              lng = e.latlng.lng;
-
-          getNewData(lat, lng, startDate, endDate);
-        }       
+          circle.setLatLng(e.latlng);
+          circle.setStyle(circleWaiting);
+        }
 
         function getNewData(lat, lng, start, end){
 
@@ -127,71 +101,11 @@
             + "&endDate=" + end;
 
           d3.json(url, function(err, json){
-            circle.setStyle({
-              color: "green",
-              fillColor: "green"
-            });
-            drawChart(json.data); 
-
-            circle.setLatLng([lat, lng]);
-            circle.setStyle({
-              color: "green",
-              fillColor: "green",
-              fillOpacity: 0.5,
-              opacity: 0.5,
-              radius: 5
-            });
 
           });
 
         }
 
-        function drawChart(data){
-
-          console.log("drawing");
-
-          data.forEach(function(d) {
-            d.date = parseDate(d.time);
-            d.value = +d.temperatureMin;
-          });
-
-          xScale.domain(data.map(function(d) { return d.date; }));
-          yScale.domain([0, d3.max(data, function(d) { return d.value; })]);
-
-          svg.append("g")
-              .attr("class", "x axis")
-              .attr("transform", "translate(0," + height + ")")
-              .call(xAxis)
-            .selectAll("text")
-              .style("text-anchor", "end")
-              .attr("dx", "-.8em")
-              .attr("dy", "-.55em")
-              .attr("transform", "rotate(-90)" );
-          svg.append("g")
-              .attr("class", "y axis")
-              .call(yAxis)
-            .append("text")
-              .attr("transform", "rotate(-90)")
-              .attr("y", 6)
-              .attr("dy", ".71em")
-              .style("text-anchor", "end")
-              .text("Value");
-          svg.selectAll("bar")
-              .data(data)
-            .enter().append("rect")
-              .style("fill", function(d){
-                if(d.value < 10){
-                  return "gray";
-                }else{
-                  return "green";
-                }
-              })
-              .attr("x", function(d) { return xScale(d.date); })
-              .attr("width", xScale.bandwidth())
-              .attr("y", function(d) { return yScale(d.value); })
-              .attr("height", function(d) { return height - yScale(d.value); });
-        }
-	    	
 	    </script>
     
     </body>
