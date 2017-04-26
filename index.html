@@ -47,18 +47,7 @@
       
       <script type="text/javascript">
 
-        //get date ranges
-        //from (today - 3 months) to today
-        var dates = {};
-        dates.today = new Date();
-        dates.threeMonthsBack = new Date();
-        dates.threeMonthsBack.setMonth(dates.threeMonthsBack.getMonth() - 3);
-        //from (today - 1 year) to ((today + 3 months) - 1 year)
-        dates.aYearAgo = new Date();
-        dates.aYearAgo.setYear(dates.aYearAgo.getFullYear() - 1);
-        dates.aYearAgoThreeMonthsForward = new Date(dates.aYearAgo);
-        dates.aYearAgoThreeMonthsForward.setMonth(dates.aYearAgoThreeMonthsForward.getMonth() + 3);
-
+        // set up map
         var sthlm = [59.311162, 18.074806];
         var map = L.map('map');
         L.tileLayer.provider('OpenStreetMap.BlackAndWhite').addTo(map);
@@ -73,6 +62,18 @@
           }).addTo(map);;
 
         map.on('click', onMapClick);
+
+        // get date ranges
+        var months = 1; // lets start with one to keep the requests down for a while
+        var dates = { "thisYear":{}, "lastYear":{} };
+        dates.thisYear.start = new Date();
+        dates.thisYear.start.setMonth(dates.thisYear.start.getMonth() - months); // today - 3 monhts
+        dates.thisYear.end = new Date(); // today
+        dates.lastYear.start = new Date();
+        dates.lastYear.start.setYear(dates.lastYear.start.getFullYear() - 1); // today - 1 year
+        dates.lastYear.end = new Date(dates.lastYear.start);
+        dates.lastYear.end.setMonth(dates.lastYear.end.getMonth() + months); // (today - 1 yeary) + 3 months
+
 
         // set the dimensions and margins of the graph
         var chartParent = d3.select("#response");
