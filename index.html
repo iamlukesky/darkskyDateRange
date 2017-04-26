@@ -49,14 +49,15 @@
 
         //get date ranges
         //from (today - 3 months) to today
-        var today = new Date();
-        var threeMonthsBack = new Date();
-        threeMonthsBack.setMonth(threeMonthsBack.getMonth() - 3);
+        var dates = {};
+        dates.today = new Date();
+        dates.threeMonthsBack = new Date();
+        dates.threeMonthsBack.setMonth(dates.threeMonthsBack.getMonth() - 3);
         //from (today - 1 year) to ((today + 3 months) - 1 year)
-        var aYearAgo = new Date();
-        aYearAgo.setYear(aYearAgo.getFullYear() - 1);
-        var aYearAgoThreeMonthsForward = new Date(aYearAgo);
-        aYearAgoThreeMonthsForward.setMonth(aYearAgoThreeMonthsForward.getMonth() + 3);
+        dates.aYearAgo = new Date();
+        dates.aYearAgo.setYear(dates.aYearAgo.getFullYear() - 1);
+        dates.aYearAgoThreeMonthsForward = new Date(dates.aYearAgo);
+        dates.aYearAgoThreeMonthsForward.setMonth(dates.aYearAgoThreeMonthsForward.getMonth() + 3);
 
         var sthlm = [59.311162, 18.074806];
         var map = L.map('map');
