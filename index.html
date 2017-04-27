@@ -115,6 +115,8 @@
             + "&startDate=" + start
             + "&endDate=" + end;
 
+          console.log(window.location.href + url);
+
           d3.json(url, function(err, json){
             dispatch.call("statechange", this, json);
           });
