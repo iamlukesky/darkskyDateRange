@@ -43,9 +43,9 @@
         }
 
         .bar{
-          fill: blue;
+          /*fill: blue;*/
           stroke: none;
-          opacity: 0.3;
+          /*opacity: 0.3;*/
         }
 
       </style>
@@ -88,14 +88,17 @@
 
         // get date ranges
         var months = 1; // lets start with one to keep the requests down for a while
-        var dates = { "thisYear":{}, "lastYear":{} };
-        dates.thisYear.start = new Date();
-        dates.thisYear.start.setMonth(dates.thisYear.start.getMonth() - months); // today - 3 monhts
-        dates.thisYear.end = new Date(); // today
-        dates.lastYear.start = new Date();
-        dates.lastYear.start.setYear(dates.lastYear.start.getFullYear() - 1); // today - 1 year
-        dates.lastYear.end = new Date(dates.lastYear.start);
-        dates.lastYear.end.setMonth(dates.lastYear.end.getMonth() + months); // (today - 1 yeary) + 3 months
+        var thisYear = { "start": new Date(), "end": new Date(), "key": "present" };
+        thisYear.end.setHours(0, 0, 0, 0);
+        thisYear.start = new Date(thisYear.end);
+        thisYear.start.setMonth(thisYear.start.getMonth() - months); // today - 3 monhts
+        var lastYear = { "start": new Date(thisYear.end), "end": new Date(), "key": "past" };
+        lastYear.start.setYear(lastYear.start.getFullYear() - 1); // today - 1 year
+        lastYear.end = new Date(lastYear.start);
+        lastYear.end.setMonth(lastYear.end.getMonth() + months); // (today - 1 yeary) + 3 months
+        var dateRanges = [thisYear, lastYear];
+
+        var parseDate = d3.isoParse;
 
         function onMapClick(e){
           if(circle == null){
@@ -104,22 +107,48 @@
             circle.setLatLng(e.latlng);
             circle.setStyle(circleWaiting);
           }
-          getNewData(e.latlng.lat, e.latlng.lng, dates.thisYear.start, dates.thisYear.end);
+          getNewData(e.latlng.lat, e.latlng.lng, dateRanges);
         }
 
-        function getNewData(lat, lng, start, end){
+        function getNewData(lat, lng, dates){
 
-          var url =
-            "/darkskySeason?lat=" + lat
-            + "&lng=" + lng
-            + "&startDate=" + start
-            + "&endDate=" + end;
+          // bygg nåt sätt att begära två perioder på en gång
+          var callsRemaining = dates.length;
+          var data = [];
 
-          console.log(window.location.href + url);
+          dates.forEach(function(range){
+            var url = buildUrl(lat, lng, range);
+            console.log(window.location.href + url);
+            d3.json(url, handleResponse);
+          })
 
-          d3.json(url, function(err, json){
-            dispatch.call("statechange", this, json);
-          });
+          function buildUrl(lat, lng, range){
+            return "/darkskySeason?lat=" + lat
+              + "&lng=" + lng
+              + "&startDate=" + range.start
+              + "&endDate=" + range.end;
+          }
+
+          function handleResponse(err, json){
+            json.data.forEach(function(d){
+              d.time = parseDate(d.time * 1000);
+                dates.forEach(function(e){
+                  if((d.time >= e.start) && (d.time <= e.end)){
+                    d.key = e.key;
+                  }
+                });
+              });
+            data = data.concat(json.data);
+            callsRemaining--;
+            if(callsRemaining <= 0){
+              done(data);
+            }
+          }
+
+          function done(data){
+            console.log("changing state");
+            dispatch.call("statechange", this, data);
+          }
 
         }
 
@@ -133,7 +162,6 @@
             right: 20
           };
 
-          var parseDate = d3.isoParse;
 
           var height = parseInt(d3.select("#chart").style("height")) - (margin.top + margin.bottom),
               width = height * 1.77777;
@@ -156,11 +184,9 @@
           svg.append("g")
             .attr("class", "y axis");
 
-          dispatch.on("statechange.bar", function(json){
-            console.log(json);
-            data = json.data;
+          dispatch.on("statechange.bar", function(data){
+            console.log(data);
             data.forEach(function(d){
-              d.time = parseDate(d.time * 1000);
               d.temperatureMean = parseFloat(d.temperatureMean);
             });
 
@@ -169,9 +195,20 @@
             yScale.domain([yExtent[0] - 5, yExtent[1] + 5]);
 
             svg.selectAll(".bar")
-              .data(data)
+              .data(data, function(d){
+                return d.time;
+              })
               .enter().append("rect")
                 .attr("class", "bar")
+                .attr("opacity", function(d){
+                  console.log(d.key);
+                  if(d.key == "present"){
+                    return 1;
+                  }else{
+                    return 0.3;
+                  }
+                })
+                .attr("fill", "OliveDrab")
                 .attr("x", function(d) {return xScale(d.time); })
                 .attr("y", function(d) {return yScale(d.temperatureMean); })
                 .attr("width", xScale.bandwidth())
