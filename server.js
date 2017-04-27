@@ -20,7 +20,7 @@ function getDataForRange(req, res){
 //  1. create date array from dates in the request
   var seasonDates = getDateRange(req);
   var seasonData = {
-    "key": "from " + req.query.startDate + " to " + req.query.endDate,
+    "dateRange": "from " + req.query.startDate + " to " + req.query.endDate,
     "data": []
   };
   var finished = _.after(seasonDates.length, done);
@@ -38,7 +38,9 @@ function getDataForRange(req, res){
 
   function parseData(data){
     data = data.daily.data[0];
-    data.key = seasonData.key;
+    data.dateRange = seasonData.dateRange;
+    data.latitude = seasonData.latitude;
+    data.longitude = seasonData.longitude;
     data.temperatureMean = (data.temperatureMax + data.temperatureMin) / 2;
     seasonData.data.push(data);
     finished();
@@ -79,7 +81,6 @@ function getAtTime(lat, lng, time, callback){
       console.log(err);
     }else{
       data = JSON.parse(data);
-      console.log(data);
       callback(data);
     }
   });
