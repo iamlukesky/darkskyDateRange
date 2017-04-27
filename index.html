@@ -42,6 +42,12 @@
           margin: 0 auto;
         }
 
+        .bar{
+          fill: blue;
+          stroke: none;
+          opacity: 0.3;
+        }
+
       </style>
 
     </head>
@@ -93,10 +99,12 @@
 
         function onMapClick(e){
           if(circle == null){
-            circle = L.circleMarker(sthlm, circleWaiting).addTo(map);
+            circle = L.circleMarker(e.latlng, circleWaiting).addTo(map);
+          }else{
+            circle.setLatLng(e.latlng);
+            circle.setStyle(circleWaiting);
           }
-          circle.setLatLng(e.latlng);
-          circle.setStyle(circleWaiting);
+          getNewData(e.latlng.lat, e.latlng.lng, dates.thisYear.start, dates.thisYear.end);
         }
 
         function getNewData(lat, lng, start, end){
@@ -117,15 +125,16 @@
 
         dispatch.on("init.bar", function(){
           var margin = {
-            top: 10,
-            bottom: 10,
-            left: 10,
-            right: 10
+            top: 20,
+            bottom: 20,
+            left: 20,
+            right: 20
           };
+
+          var parseDate = d3.isoParse;
 
           var height = parseInt(d3.select("#chart").style("height")) - (margin.top + margin.bottom),
               width = height * 1.77777;
-
 
           var svg = d3.select("#chart").append("svg")
             .attr("width", width + (margin.left + margin.right))
@@ -133,7 +142,48 @@
             .append("g")
               .attr("transform", "translate(" + margin.left + ", " + margin.right + ")");
 
-          dispatch.on("statechange.bar", function(data){
+          // var xScale = d3.scaleTime().rangeRound([0, width]);
+          var xScale = d3.scaleBand().rangeRound([0, width], .05).padding(0.1);
+          var yScale = d3.scaleLinear().rangeRound([height, 0]);
+
+          var xAxis = d3.axisBottom(xScale);
+          var yAxis = d3.axisLeft(yScale);
+
+          svg.append("g")
+            .attr("class", "x axis");
+          svg.append("g")
+            .attr("class", "y axis");
+
+          dispatch.on("statechange.bar", function(json){
+            console.log(json);
+            data = json.data;
+            data.forEach(function(d){
+              d.time = parseDate(d.time * 1000);
+              d.temperatureMean = parseFloat(d.temperatureMean);
+            });
+
+            xScale.domain(data.map(function(d){return d.time;}));
+            var yExtent = d3.extent(data, function(d){return d.temperatureMean;});
+            yScale.domain([yExtent[0] - 5, yExtent[1] + 5]);
+
+            svg.selectAll(".bar")
+              .data(data)
+              .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", function(d) {return xScale(d.time); })
+                .attr("y", function(d) {return yScale(d.temperatureMean); })
+                .attr("width", xScale.bandwidth())
+                .attr("height", function(d){ return height - yScale(d.temperatureMean); });
+
+            xAxis.scale(xScale);
+            yAxis.scale(yScale);
+
+            d3.select(".x.axis")
+              .attr("transform", "translate(0, " + height + ")")
+              .call(xAxis.ticks(10));
+
+            d3.select(".y.axis")
+              .call(yAxis);
 
           });
             
