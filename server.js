@@ -39,7 +39,7 @@ function getDataForRange(req, res){
   function parseData(data){
     data = data.daily.data[0];
     data.key = seasonData.key;
-    data.temperatureMean = getMean("temperature", data.hourly.data);
+    data.temperatureMean = (data.temperatureMax + data.temperatureMin) / 2;
     seasonData.data.push(data);
     finished();
   }
@@ -76,9 +76,10 @@ function getAtTime(lat, lng, time, callback){
 
   request.get(url, function(err, res, data){
     if(err){
-      callback(err);
+      console.log(err);
     }else{
       data = JSON.parse(data);
+      console.log(data);
       callback(data);
     }
   });
