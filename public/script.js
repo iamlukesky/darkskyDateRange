@@ -23,7 +23,7 @@ map.setView(sthlm, 13);
 
 map.on('click', onMapClick);
 
-var dateRanges = getRanges(1);
+var dateRanges = getRanges(6);
 var parseDate = d3.isoParse;
 
 var circle = L.circleMarker(sthlm, circleWaiting).addTo(map);
@@ -49,7 +49,6 @@ function getRanges(months){
 }
 
 function getNewData(lat, lng, dates){
-
   var callsRemaining = dates.length;
   var data = {};
 
@@ -67,11 +66,11 @@ function getNewData(lat, lng, dates){
   }
 
   function handleResponse(err, json){
-
     var key;
 
     json.data.forEach(function(d){
       d.time = parseDate(d.time * 1000);
+      d.temperatureMean = parseFloat(d.temperatureMean);
     })
 
     dates.forEach(function(e){
@@ -95,114 +94,178 @@ function getNewData(lat, lng, dates){
     console.log("changing state");
     dispatch.call("statechange", this, data);
   }
-
 }
 
 var dispatch = d3.dispatch("init", "load", "statechange", "resize");
 
-dispatch.on("init.chart", function(){
-  svg = "svgen";
-  width = 100;
-  height = 200;
+var chart = function(){
 
-  dispatch.on("init.past", function(){
-  });
+  var margin,
+      svg,
+      width, height,
+      yScale,
+      yAxis;
 
-  dispatch.on("init.present", function(){
-  });
+  margin = {top: 20, bottom: 20, left: 20, right: 20 };
 
-});
+  height = parseInt(d3.select("#chart").style("height")) - (margin.top + margin.bottom),
+  width = height * 1.77777;
 
-
-dispatch.on("init.bar", function(){
-
-  var timePeriod = "past";
-
-  var margin = {
-    top: 20,
-    bottom: 20,
-    left: 20,
-    right: 20
-  };
-
-
-  var height = parseInt(d3.select("#chart").style("height")) - (margin.top + margin.bottom),
-      width = height * 1.77777;
-
-  var svg = d3.select("#chart").append("svg")
-    .attr("width", width + (margin.left + margin.right))
-    .attr("height", height + (margin.top + margin.bottom))
+  svg = d3.select("#chart").append("svg")
+    .attrs({
+      "width": function(){ return width + (margin.left + margin.right); },
+      "height": function(){ return height + (margin.top + margin.bottom); }
+    })
     .append("g")
-      .attr("transform", "translate(" + margin.left + ", " + margin.right + ")");
+    .attr("transform", "translate(" + margin.left + ", " + margin.right + ")");
 
-  var xScale = d3.scaleTime()
-    .rangeRound([0, width]);
-  var yScale = d3.scaleLinear().rangeRound([height, 0]);
+  yScale = d3.scaleLinear().rangeRound([height, 0]);
+  yAxis = d3.axisLeft(yScale);
 
-  var xAxis = d3.axisBottom(xScale);
-  var yAxis = d3.axisLeft(yScale);
+  svg.append("g").attr("class", "y axis");
+  yScale.domain([-20, 20]);
+  svg.select(".y.axis")
+    .transition()
+    .call(yAxis);
 
-  svg.append("g")
-    .attr("class", "x axis");
-  svg.append("g")
-    .attr("class", "y axis");
+  // dispatch.on("statechange.chart", function(data){
+  //   var yExtent = d3.extent(data, function(d){return d.temperatureMean;});
+  //   yScale.domain([yExtent[0] - 5, yExtent[1] + 5]);
+  //   svg.select(".y.axis")
+  //     .transition()
+  //     .call(yAxis);
+  // });
 
-  dispatch.on("statechange.bar", function(data){
-    var data = data[timePeriod];
-    data.forEach(function(d){
-      d.temperatureMean = parseFloat(d.temperatureMean);
-    });
+  var graphPresent = function(){
+    var timePeriod = "present";
+    var graphWidth = width / 2;
 
-    xScale.domain(d3.extent(data, function(d){return d.time;}));
-    var yExtent = d3.extent(data, function(d){return d.temperatureMean;});
-    yScale.domain([yExtent[0] - 5, yExtent[1] + 5]);
+    var xScale = d3.scaleTime().rangeRound([0, graphWidth]);
+    var xAxis = d3.axisBottom(xScale);
 
-    var bars = svg.selectAll(".bar")
-      .data(data, function(d){
-        return d.time;
-      });
+    var g = svg.append("g");
+    g.append("g").attr("class", "present x axis");
 
-    bars.exit()
-      .transition()
-      .attr("y", yScale(0))
-      .attr("height", height - yScale(0))
-      .remove();
+    dispatch.on("statechange.present", function(data){
+      var data = data[timePeriod];
 
-    bars.enter()
-      .append("rect")
+      xScale.domain(d3.extent(data, function(d){return d.time;}));
+
+      var bars = g.selectAll(".bar")
+        .data(data, function(d){
+          return d.time;
+        });
+
+      bars.exit()
+        .transition()
+        .attr("y", yScale(0))
+        .attr("height", height - yScale(0))
+        .remove();
+
+      bars.enter()
+        .append("rect")
         .attr("class", "bar")
         .attr("x", function(d) {return xScale(d.time); })
-        .attr("width", 18)
+        .attr("width", 1)
         .attr("opacity", 0.8)
         .attr("fill", "OliveDrab")
         .attr("y", yScale(0))
         .attr("height", height - yScale(0))
         .attr("y", function(d) {return yScale(d.temperatureMean); })
         .attr("height", function(d){ return height - yScale(d.temperatureMean); });
-    
-    bars.transition()
-      .attr("x", function(d){
-        return xScale(d.time);
-      })
-      .attr("y", function(d) {return yScale(d.temperatureMean); })
-      .attr("height", function(d){
-        return height - yScale(d.temperatureMean);
-      });
+      
+      bars.transition()
+        .attr("x", function(d){
+          return xScale(d.time);
+        })
+        .attr("y", function(d) {return yScale(d.temperatureMean); })
+        .attr("height", function(d){
+          return height - yScale(d.temperatureMean);
+        });
 
-    xAxis.scale(xScale);
-    yAxis.scale(yScale);
+      xAxis.scale(xScale);
+      yAxis.scale(yScale);
 
-    d3.select(".x.axis")
-      .attr("transform", "translate(0, " + height + ")")
-      .transition()
-      .call(xAxis.ticks(5));
+      g.select(".present.x.axis")
+        .attr("transform", "translate(0, " + height + ")")
+        .transition()
+        .call(xAxis.ticks(5));
 
-    d3.select(".y.axis")
-      .transition()
-      .call(yAxis);
+      // g.select(".y.axis")
+      //   .transition()
+      //   .call(yAxis);
 
-  });
-    
-});
+    });
+  }();
 
-dispatch.call("init", this);
+  var graphPast = function(){
+    var timePeriod = "past";
+    var graphWidth = width / 2;
+    var xScale = d3.scaleTime().rangeRound([0, graphWidth]);
+    var xAxis = d3.axisBottom(xScale);
+
+    var g = svg.append("g");
+    g.attr("transform", "translate(" + graphWidth + ", 0)");
+    g.append("g").attr("class", "past x axis");
+
+    dispatch.on("statechange.past", function(data){
+      var data = data[timePeriod];
+
+      xScale.domain(d3.extent(data, function(d){return d.time;}));
+
+      var bars = g.selectAll(".bar")
+        .data(data, function(d){
+          return d.time;
+        });
+
+      bars.exit()
+        .transition()
+        .attr("y", yScale(0))
+        .attr("height", height - yScale(0))
+        .remove();
+
+      bars.enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", function(d) {return xScale(d.time); })
+        .attr("width", 1)
+        .attr("opacity", 0.8)
+        .attr("fill", "red")
+        .attr("y", yScale(0))
+        .attr("height", height - yScale(0))
+        .attr("y", function(d) {return yScale(d.temperatureMean); })
+        .attr("height", function(d){ return height - yScale(d.temperatureMean); });
+      
+      bars.transition()
+        .attr("x", function(d){
+          return xScale(d.time);
+        })
+        .attr("y", function(d) {return yScale(d.temperatureMean); })
+        .attr("height", function(d){
+          return height - yScale(d.temperatureMean);
+        });
+
+      xAxis.scale(xScale);
+      yAxis.scale(yScale);
+
+      g.select(".past.x.axis")
+        .attr("transform", "translate(" + 0 + ", " + height + ")")
+        // .attr("transform", "translate(" + graphWidth + ", " + height + ")")
+        .transition()
+        .call(xAxis.ticks(5));
+
+
+
+    });
+  }();
+
+  function parseTemperature(d){
+
+  }
+
+}();
+
+
+
+
+// dispatch.call("init", this);
