@@ -79,7 +79,6 @@
 
         // set up map
         var sthlm = [59.311162, 18.074806];
-        var circle;
         var map = L.map('map');
         L.tileLayer.provider('OpenStreetMap.BlackAndWhite').addTo(map);
         map.setView(sthlm, 13);
@@ -100,15 +99,12 @@
 
         var parseDate = d3.isoParse;
 
+        var circle = L.circleMarker(sthlm, circleWaiting).addTo(map);
         getNewData(sthlm[0], sthlm[1], dateRanges);
 
         function onMapClick(e){
-          if(circle == null){
-            circle = L.circleMarker(e.latlng, circleWaiting).addTo(map);
-          }else{
-            circle.setLatLng(e.latlng);
-            circle.setStyle(circleWaiting);
-          }
+          circle.setLatLng(e.latlng);
+          circle.setStyle(circleWaiting);
           getNewData(e.latlng.lat, e.latlng.lng, dateRanges);
         }
 
