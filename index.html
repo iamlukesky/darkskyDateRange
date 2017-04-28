@@ -114,7 +114,6 @@
 
         function getNewData(lat, lng, dates){
 
-          // bygg nåt sätt att begära två perioder på en gång
           var callsRemaining = dates.length;
           var data = [];
 
@@ -148,7 +147,7 @@
           }
 
           function done(data){
-            console.log("changing state");
+            circle.setStyle(circleNormal);            
             dispatch.call("statechange", this, data);
           }
 
@@ -174,8 +173,6 @@
             .append("g")
               .attr("transform", "translate(" + margin.left + ", " + margin.right + ")");
 
-          // var xScale = d3.scaleTime().rangeRound([0, width]);
-          // var xScale = d3.scaleBand().rangeRound([0, width], .05).padding(0.1);
           var xScale = d3.scaleTime()
             .rangeRound([0, width]);
           var yScale = d3.scaleLinear().rangeRound([height, 0]);
@@ -194,12 +191,9 @@
               d.temperatureMean = parseFloat(d.temperatureMean);
             });
 
-            // xScale.domain(data.map(function(d){return d.time;}));
             xScale.domain(d3.extent(data, function(d){return d.time;}));
-            // console.log(d3.extent(data, function(d){return d.time}));
             var yExtent = d3.extent(data, function(d){return d.temperatureMean;});
             yScale.domain([yExtent[0] - 5, yExtent[1] + 5]);
-
 
             var bars = svg.selectAll(".bar")
               .data(data, function(d){
