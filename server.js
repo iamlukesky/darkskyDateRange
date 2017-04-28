@@ -7,9 +7,7 @@ var _ = require('lodash');
 var app = express();
 app.listen(process.env.PORT || 3000);
 
-app.get('/', function(req, res){
-  res.sendFile('/index.html', {root: __dirname});
-});
+app.use(express.static('public'));
 
 app.use('/darkskySeason', function(req, res){
   getDataForRange(req, res);
