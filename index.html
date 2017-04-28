@@ -111,7 +111,7 @@
         function getNewData(lat, lng, dates){
 
           var callsRemaining = dates.length;
-          var data = [];
+          var data = {};
 
           dates.forEach(function(range){
             var url = buildUrl(lat, lng, range);
@@ -127,15 +127,31 @@
           }
 
           function handleResponse(err, json){
+
+            var key = "";
+
             json.data.forEach(function(d){
               d.time = parseDate(d.time * 1000);
-                dates.forEach(function(e){
-                  if((d.time >= e.start) && (d.time <= e.end)){
-                    d.key = e.key;
-                  }
-                });
-              });
-            data = data.concat(json.data);
+            })
+
+            dates.forEach(function(e){
+              var i = Math.floor(json.data.length / 2);
+              if((json.data[i].time >= e.start) && (json.data[i].time <= e.end)){
+                key = e.key;
+              }
+            });
+
+            data[key] = json.data;
+
+            // json.data.forEach(function(d){
+            //   d.time = parseDate(d.time * 1000);
+            //     dates.forEach(function(e){
+            //       if((d.time >= e.start) && (d.time <= e.end)){
+            //         d.key = e.key;
+            //       }
+            //     });
+            //   });
+            // data = data.concat(json.data);
             callsRemaining--;
             if(callsRemaining <= 0){
               done(data);
@@ -144,6 +160,8 @@
 
           function done(data){
             circle.setStyle(circleNormal);            
+            console.log(data);
+            console.log("changing state");
             dispatch.call("statechange", this, data);
           }
 
@@ -152,6 +170,9 @@
         var dispatch = d3.dispatch("init", "load", "statechange", "resize");
 
         dispatch.on("init.bar", function(){
+
+          var timePeriod = "past";
+
           var margin = {
             top: 20,
             bottom: 20,
@@ -182,7 +203,7 @@
             .attr("class", "y axis");
 
           dispatch.on("statechange.bar", function(data){
-            console.log(data);
+            var data = data[timePeriod];
             data.forEach(function(d){
               d.temperatureMean = parseFloat(d.temperatureMean);
             });
@@ -206,19 +227,11 @@
               .append("rect")
                 .attr("class", "bar")
                 .attr("x", function(d) {return xScale(d.time); })
-                .attr("width", 1)
-                .attr("opacity", function(d){
-                  if(d.key == "present"){
-                    return 1;
-                  }else{
-                    return 0.3;
-                  }
-                })
+                .attr("width", 18)
+                .attr("opacity", 0.8)
                 .attr("fill", "OliveDrab")
                 .attr("y", yScale(0))
                 .attr("height", height - yScale(0))
-                .transition()
-                .delay(250)
                 .attr("y", function(d) {return yScale(d.temperatureMean); })
                 .attr("height", function(d){ return height - yScale(d.temperatureMean); });
             
