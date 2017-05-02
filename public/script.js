@@ -23,7 +23,7 @@ map.setView(sthlm, 13);
 
 map.on('click', onMapClick);
 
-var dateRanges = getRanges(6);
+var dateRanges = getRanges(1);
 var parseDate = d3.isoParse;
 
 var circle = L.circleMarker(sthlm, circleWaiting).addTo(map);
@@ -128,13 +128,46 @@ var chart = function(){
     .transition()
     .call(yAxis);
 
-  // dispatch.on("statechange.chart", function(data){
-  //   var yExtent = d3.extent(data, function(d){return d.temperatureMean;});
-  //   yScale.domain([yExtent[0] - 5, yExtent[1] + 5]);
-  //   svg.select(".y.axis")
-  //     .transition()
-  //     .call(yAxis);
-  // });
+  svg.append("clipPath")
+    .attr("id", "clipHalf")
+    .append("rect")
+    .attr("width", width / 2)
+    .attr("height", height);
+  svg.append("clipPath")
+    .attr("id", "clip")
+    .append("rect")
+    .attr("width", width)
+    .attr("height", height);
+
+  svg.append("line")
+    .attrs({
+      "class": "zeroline",
+      "x1": "0",
+      "y1": function(){ return yScale(0); },
+      "x2": function(){ return width; },
+      "y2": function(){ return yScale(0); },
+      "stroke": "black",
+      "clip-path": "url(#clip)"
+    })
+
+  dispatch.on("statechange.chart", function(data){
+    data = data["past"].concat(data["present"]);
+    console.log(data);
+    var yExtent = d3.extent(data, function(d){return d.temperatureMean;});
+    yScale.domain([yExtent[0] - 5, yExtent[1] + 5]);
+    svg.select(".y.axis")
+      .raise()
+      .transition()
+      .call(yAxis);
+
+    svg.select(".zeroline")
+      .raise()
+      .transition()
+      .attrs({
+        "y1": function(){ return yScale(0); },
+        "y2": function(){ return yScale(0); }
+      });
+  });
 
   var graphPresent = function(){
     var timePeriod = "present";
@@ -164,11 +197,12 @@ var chart = function(){
 
       bars.enter()
         .append("rect")
+        .attr("clip-path", "url(#clipHalf)")
         .attr("class", "bar")
         .attr("x", function(d) {return xScale(d.time); })
-        .attr("width", 1)
+        .attr("width", 6)
         .attr("opacity", 0.8)
-        .attr("fill", "OliveDrab")
+        .attr("fill", "steelblue")
         .attr("y", yScale(0))
         .attr("height", height - yScale(0))
         .attr("y", function(d) {return yScale(d.temperatureMean); })
@@ -187,13 +221,10 @@ var chart = function(){
       yAxis.scale(yScale);
 
       g.select(".present.x.axis")
+        .raise()
         .attr("transform", "translate(0, " + height + ")")
         .transition()
         .call(xAxis.ticks(5));
-
-      // g.select(".y.axis")
-      //   .transition()
-      //   .call(yAxis);
 
     });
   }();
@@ -226,11 +257,12 @@ var chart = function(){
 
       bars.enter()
         .append("rect")
+        .attr("clip-path", "url(#clipHalf)")
         .attr("class", "bar")
         .attr("x", function(d) {return xScale(d.time); })
-        .attr("width", 1)
-        .attr("opacity", 0.8)
-        .attr("fill", "red")
+        .attr("width", 6)
+        .attr("opacity", 0.2)
+        .attr("fill", "steelblue")
         .attr("y", yScale(0))
         .attr("height", height - yScale(0))
         .attr("y", function(d) {return yScale(d.temperatureMean); })
@@ -249,6 +281,7 @@ var chart = function(){
       yAxis.scale(yScale);
 
       g.select(".past.x.axis")
+        .raise()
         .attr("transform", "translate(" + 0 + ", " + height + ")")
         // .attr("transform", "translate(" + graphWidth + ", " + height + ")")
         .transition()
@@ -258,10 +291,6 @@ var chart = function(){
 
     });
   }();
-
-  function parseTemperature(d){
-
-  }
 
 }();
 
