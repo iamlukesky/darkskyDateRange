@@ -23,7 +23,7 @@ map.setView(sthlm, 13);
 
 map.on('click', onMapClick);
 
-var dateRanges = getRanges(1);
+var dateRanges = getRanges(3);
 var parseDate = d3.isoParse;
 
 var circle = L.circleMarker(sthlm, circleWaiting).addTo(map);

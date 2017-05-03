@@ -8,10 +8,12 @@ dispatch.on("init", function(){
       yAxis,
       chartArea;
 
-  margin = {top: 20, bottom: 20, left: 20, right: 20 };
+  margin = {top: 20, bottom: 40, left: 20, right: 20 };
 
   height = parseInt(d3.select("#chart").style("height")) - (margin.top + margin.bottom),
   width = height * 1.77777;
+
+  temperatureStrokeWidth = 3;
 
   svg = d3.select("#chart").append("svg")
     .attrs({
@@ -51,9 +53,24 @@ dispatch.on("init", function(){
       "clip-path": "url(#clip)"
     });
 
+  var todaymarker = svg.append("g");
+
+  todaymarker.append("line")
+    .attr("class", "zeroline")
+    .attr("x1", width / 2)
+    .attr("y1", height)
+    .attr("x2", width / 2)
+    .attr("y2", height - 10)
+    .attr("stroke", "black");
+
+  todaymarker.append("text")
+    .attr("x", width / 2)
+    .attr("y", height - 15)
+    .attr("text-anchor", "middle")
+    .text("Today");
+
     dispatch.on("statechange.chart", function(data){
     data = data["past"].concat(data["present"]);
-    console.log(data);
     var yExtent = d3.extent(data, function(d){return d.temperatureMean;});
     yScale.domain([yExtent[0] - 5, yExtent[1] + 5]);
     svg.select(".y.axis")
@@ -81,28 +98,84 @@ dispatch.on("init", function(){
 
     var temperatureLine = d3.line()
       .x(function(d) {
-        return xScale(d.date);
+        return xScale(d.time);
       })
       .y(function(d) {
         return yScale(d.temperatureMean);
       });
 
-    var path = chartArea.append("path");
+    var g = chartArea.append("g");
 
-    var g = svg.append("g");
-    g.append("g").attr("class", "present x axis");
+    var path = g.append("path")
+      .attr("fill", "none")
+      .attr("stroke", "black")
+      .attr("stroke-width", temperatureStrokeWidth);
+
+    svg.append("g").attr("class", "present x axis");
 
     dispatch.on("statechange.present", function(data){
       var data = data[timePeriod];
+
       xScale.domain(d3.extent(data, function(d){return d.time;}));
 
-      console.log(xScale(new Date()));
+      path.transition()
+        .attr("d", temperatureLine(data));
 
-      path.attr("d", temperatureLine(data));
+      svg.select(".present.x.axis")
+        .attr("transform", "translate(0, " + height + ")")
+        .transition()
+        .call(xAxis.ticks(6));
 
     });
 
   }();
+
+  var graphPast = function(){
+
+    var timePeriod = "past";
+    var graphWidth = width / 2;
+
+    var xScale = d3.scaleTime().rangeRound([0, graphWidth]);
+    var xAxis = d3.axisBottom(xScale);
+
+    var temperatureLine = d3.line()
+      .x(function(d) {
+        return xScale(d.time);
+      })
+      .y(function(d) {
+        return yScale(d.temperatureMean);
+      });
+
+    var g = chartArea.append("g")
+      .attr("class", "past")
+      .attr("transform", "translate(" + graphWidth + ", 0)");
+
+    var path = g.append("path")
+      .attr("fill", "none")
+      .attr("stroke", "black")
+      .attr("opacity", 0.3)
+      .attr("stroke-width", temperatureStrokeWidth);
+
+    svg.append("g").attr("class", "past x axis");
+
+    dispatch.on("statechange.past", function(data){
+      var data = data[timePeriod];
+
+      xScale.domain(d3.extent(data, function(d){return d.time;}));
+
+      path.transition()
+        .attr("d", temperatureLine(data));
+
+      svg.select(".past.x.axis")
+        .attr("transform", "translate(" + graphWidth + "," + height + ")")
+        .transition()
+        .call(xAxis.ticks(6));
+
+    });
+
+  }();
+
+
 
 });
 
