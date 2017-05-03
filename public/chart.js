@@ -33,6 +33,18 @@ dispatch.on("init", function(){
     // .attr("transform", "translate(" + margin.left + ", " + margin.right + ")")
     .attr("clip-path", "url(#clip)");
 
+  svg.append("clipPath")
+    .attr("id", "temperatureClipWarm")
+    .append("rect")
+    .attr("width", width)
+    .attr("height", height);
+
+  svg.append("clipPath")
+    .attr("id", "temperatureClipCold")
+    .append("rect")
+    .attr("width", width)
+    .attr("height", height);
+
   yScale = d3.scaleLinear().rangeRound([height, 0]);
   yAxis = d3.axisLeft(yScale);
 
@@ -42,15 +54,15 @@ dispatch.on("init", function(){
     .transition()
     .call(yAxis);
 
-  svg.append("line")
+  chartArea.append("line")
     .attrs({
       "class": "zeroline",
       "x1": "0",
       "y1": function(){ return yScale(0); },
       "x2": function(){ return width; },
       "y2": function(){ return yScale(0); },
-      "stroke": "black",
-      "clip-path": "url(#clip)"
+      "stroke": "black"
+      // "clip-path": "url(#clip)"
     });
 
   var todaymarker = svg.append("g");
@@ -69,7 +81,7 @@ dispatch.on("init", function(){
     .attr("text-anchor", "middle")
     .text("Today");
 
-    dispatch.on("statechange.chart", function(data){
+  dispatch.on("statechange.chart", function(data){
     data = data["past"].concat(data["present"]);
     var yExtent = d3.extent(data, function(d){return d.temperatureMean;});
     yScale.domain([yExtent[0] - 5, yExtent[1] + 5]);
@@ -85,6 +97,17 @@ dispatch.on("init", function(){
         "y1": function(){ return yScale(0); },
         "y2": function(){ return yScale(0); }
       });
+
+    var temperatureThreshold = 5;
+
+    svg.select("#temperatureClipWarm")
+      .selectAll("rect")
+      .attr("height", function(){ return yScale(temperatureThreshold); });
+
+    svg.select("#temperatureClipCold")
+      .selectAll("rect")
+      .attr("height", function(){ return height - yScale(temperatureThreshold); })
+      .attr("transform", "translate(0," + yScale(temperatureThreshold) + ")");
 
   });
 
@@ -106,9 +129,16 @@ dispatch.on("init", function(){
 
     var g = chartArea.append("g");
 
-    var path = g.append("path")
+    // g.attr("clip-path", "url(#temperatureClip");
+
+    var pathWarm = g.append("path")
       .attr("fill", "none")
-      .attr("stroke", "black")
+      .attr("stroke", "red")
+      .attr("stroke-width", temperatureStrokeWidth);
+
+    var pathCold = g.append("path")
+      .attr("fill", "none")
+      .attr("stroke", "blue")
       .attr("stroke-width", temperatureStrokeWidth);
 
     svg.append("g").attr("class", "present x axis");
@@ -118,7 +148,14 @@ dispatch.on("init", function(){
 
       xScale.domain(d3.extent(data, function(d){return d.time;}));
 
-      path.transition()
+      pathWarm
+        .attr("clip-path", "url(#temperatureClipWarm")
+        .transition()
+        .attr("d", temperatureLine(data));
+
+      pathCold
+        .attr("clip-path", "url(#temperatureClipCold)")
+        .transition()
         .attr("d", temperatureLine(data));
 
       svg.select(".present.x.axis")
