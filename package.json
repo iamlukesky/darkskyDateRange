@@ -1,0 +1,19 @@
+{
+  "name": "darksky-daterange",
+  "version": "0.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iamlukesky/darkskyDateRange.git"
+  },
+  "author": "Johnnie Hård <johnnie.hard@gmail.com> (https://synvinkel.org)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/iamlukesky/darkskyDateRange/issues"
+  },
+  "homepage": "https://github.com/iamlukesky/darkskyDateRange#readme"
+}
