@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/iamlukesky/darkskyDateRange/issues"
   },
-  "homepage": "https://github.com/iamlukesky/darkskyDateRange#readme"
+  "homepage": "https://github.com/iamlukesky/darkskyDateRange#readme",
+  "dependencies": {
+    "express": "^4.15.2",
+    "lodash": "^4.17.4",
+    "request": "^2.81.0"
+  }
 }
