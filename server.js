@@ -1,7 +1,5 @@
 var express = require('express');  
 var request = require('request');
-var SS = require('simple-statistics');
-
 var _ = require('lodash');
 
 var app = express();
@@ -52,14 +50,6 @@ function getDataForRange(req, res){
     res.json(seasonData);
     console.timeEnd("test");
   }
-}
-
-function getMean(datapoint, data){ // data is an array of objects
-  var values = [];
-  for(var i = 0; i < data.length; i++){
-    values.push(parseFloat(data[i][datapoint]));
-  }
-  return SS.mean(values);
 }
 
 function getAtTime(lat, lng, time, callback){
