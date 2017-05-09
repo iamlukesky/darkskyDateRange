@@ -1,2 +1,4 @@
 node_modules/
 start.sh
+.env
+npm-debug.log
