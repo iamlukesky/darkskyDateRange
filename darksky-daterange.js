@@ -2,7 +2,7 @@
 var _ = require('lodash');
 var request = require('request');
 
-module.exports.getDataForRange = getDataForRange
+module.exports.getDataForRange = getDataForRange;
 
 function getDataForRange(latlng, startDate, endDate, callback){
   console.time("test");
