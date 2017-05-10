@@ -13,7 +13,13 @@ app.use('/darkskySeason', function(req, res){
   var startDate = new Date(req.query.startDate);
   var endDate = new Date(req.query.endDate);
 
-  darkskyDateRange.getDataForRange(latlng, startDate, endDate, function(result){
-    res.json(result);
+  darkskyDateRange.getDataForRange(latlng, startDate, endDate, function(err, result){
+    if (err) {
+      res.status(400).send("Couldn't get weatherdata");
+      return console.error("Something went wrong getting the weatherdata", err);
+    }
+    else{
+      res.json(result);
+    }
   });
 });
