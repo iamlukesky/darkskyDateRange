@@ -13,8 +13,7 @@ app.use('/darkskySeason', function(req, res){
   var startDate = new Date(req.query.startDate);
   var endDate = new Date(req.query.endDate);
 
-  darkskyDateRange.getDataForRange(latlng, startDate, endDate, function(data){
-    res.json(data);
+  darkskyDateRange.getDataForRange(latlng, startDate, endDate, function(result){
+    res.json(result);
   });
-  // res.json(darkskyDateRange.getDataForRange(latlng, startDate, endDate));
 });
