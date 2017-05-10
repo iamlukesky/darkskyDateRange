@@ -1,28 +1,25 @@
-// require('dotenv').config();
+
 var _ = require('lodash');
 var request = require('request');
 
 module.exports.getDataForRange = getDataForRange
 
-function getDataForRange(req, res){
+function getDataForRange(latlng, startDate, endDate, callback){
   console.time("test");
 	//  1. create date array from dates in the request
-  var seasonDates = getDateRange(req);
+  var seasonDates = getDateRange(startDate, endDate);
   var seasonData = {
-    "dateRange": "from " + req.query.startDate + " to " + req.query.endDate,
+    "dateRange": "from " + startDate + " to " + endDate,
     "data": []
   };
   var finished = _.after(seasonDates.length, done);
 
-  //  2. loop trough array
+  //  2. loop trough dates array
   //    a. make darksky request for that date
   //    b. return response(?)
   for(var i = 0; i < seasonDates.length; i++){
     var unixTime = Math.floor(seasonDates[i].getTime() / 1000);
-    var lat = req.query.lat,
-        lng = req.query.lng;
-
-    getAtTime(lat, lng, unixTime, parseData);
+    getAtTime(latlng, unixTime, parseData);
   }
 
   function parseData(data){
@@ -40,19 +37,19 @@ function getDataForRange(req, res){
       return parseInt(a.time) - parseInt(b.time);
     });
 
-    res.json(seasonData);
+    callback(seasonData);
     console.timeEnd("test");
   }
 }
 
-function getAtTime(lat, lng, time, callback){
+function getAtTime(latlng, time, callback){
   var url =
   'https://api.darksky.net/forecast/'
   + process.env.DARKSKY_API_KEY
   + '/'
-  + lat
+  + latlng.lat
   + ','
-  + lng
+  + latlng.lng
   + ','
   + time
   + '?lang=sv&units=si';
@@ -67,9 +64,7 @@ function getAtTime(lat, lng, time, callback){
   });
 }
 
-function getDateRange(req){
-  var startDate = new Date(req.query.startDate);
-  var endDate = new Date(req.query.endDate);
+function getDateRange(startDate, endDate){
   var season = [];
   for(var d = startDate; d < endDate; d.setDate(d.getDate()+1)){
     season.push(new Date(d));
