@@ -95,7 +95,13 @@ dispatch.on("init", function(){
     .text("Today");
 
   dispatch.on("statechange.chart", function(data){
-    data = data["past"].concat(data["present"]);
+    try{
+      data = data["present"].concat(data["past"]);
+    }
+    catch(err){
+      throw err;
+      console.log(data);
+    }
     var yExtent = d3.extent(data, function(d){return d.temperatureMean;});
     yScale.domain([yExtent[0] - 5, yExtent[1] + 5]);
     svg.select(".y.axis")
@@ -191,6 +197,9 @@ dispatch.on("init", function(){
     var xAxis = d3.axisBottom(xScale);
 
     var temperatureLine = d3.line()
+      .defined(function(d){
+        return d.temperatureMean!=null;
+      })
       .x(function(d) {
         return xScale(d.time);
       })
