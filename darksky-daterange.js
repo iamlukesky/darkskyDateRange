@@ -22,14 +22,25 @@ function getDataForRange(latlng, startDate, endDate, callback){
     getAtTime(latlng, unixTime, parseData);
   }
 
-  function parseData(data){
-    data = data.daily.data[0];
-    data.dateRange = seasonData.dateRange;
-    data.latitude = seasonData.latitude;
-    data.longitude = seasonData.longitude;
-    data.temperatureMean = (data.temperatureMax + data.temperatureMin) / 2;
-    seasonData.data.push(data);
-    finished();
+  function parseData(err, data){
+    if(err){
+      console.error(err);
+      return finished();
+    }
+    else if(data.daily == null){
+      data.message = "no data for this location at the requested date"
+      seasonData.data.push(data);
+      return finished();
+    }
+    else{
+      data = data.daily.data[0];
+      data.daterange = seasonData.daterange;
+      data.latitude = seasonData.latitude;
+      data.longitude = seasonData.longitude;
+      data.temperatureMean = (data.temperatureMax + data.temperatureMin) / 2;
+      seasonData.data.push(data);
+      return finished();
+    }
   }
 
   function done(){
@@ -37,7 +48,7 @@ function getDataForRange(latlng, startDate, endDate, callback){
       return parseInt(a.time) - parseInt(b.time);
     });
 
-    callback(seasonData);
+    callback(null, seasonData);
     console.timeEnd("test");
   }
 }
@@ -57,9 +68,10 @@ function getAtTime(latlng, time, callback){
   request.get(url, function(err, res, data){
     if(err){
       console.log(err);
+      callback(err, null);
     }else{
       data = JSON.parse(data);
-      callback(data);
+      callback(null, data);
     }
   });
 }
